@@ -1,0 +1,26 @@
+Public Class frm_Menu
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar aplicacion?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+
+    Private Sub ClientesToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ClientesToolStripMenuItem.Click
+        frm_Clientes.ShowDialog()
+    End Sub
+
+
+    Private Sub ProvedoresToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ProvedoresToolStripMenuItem.Click
+        frm_AbmProveedores.ShowDialog()
+    End Sub
+
+    Private Sub AutomovilesToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles AutomovilesToolStripMenuItem.Click
+        frm_Auto.ShowDialog()
+    End Sub
+
+End Class
