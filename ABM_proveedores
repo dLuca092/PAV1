@@ -1,0 +1,273 @@
+Public Class frm_AbmProveedores
+    Dim CONSULTA As New Conexion
+    'Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
+    'Dim conexion As New Data.OleDb.OleDbConnection
+    'Dim comando As New Data.OleDb.OleDbCommand
+
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar gestion de Proveedores?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+    Private Sub frm_AbmProveedores_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        txt_nombre.Focus()
+        cargar_grilla_provee()
+    End Sub
+
+    Private Sub cmd_nuevo_Click(sender As Object, e As EventArgs) Handles cmd_nuevo.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+
+        Me.blanquiar()
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = True
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+        Me.txt_id.Enabled = False
+        Me.generarIdProveedor()
+
+
+    End Sub
+
+
+    Private Sub blanquiar()
+        habilitar(True)
+        clearForm()
+    End Sub
+
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                O.SelectedIndex = -1
+            End If
+        Next
+    End Sub
+
+
+    Private Function verificarCasillas() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text <> "" Then
+                    If obj.Name <> "msktxt_telefono" Then
+                        Return False
+                    End If
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Sub habilitar(ByVal valor As Boolean)
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Enabled = valor
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                obj.Enabled = valor
+            End If
+        Next
+    End Sub
+
+    Private Sub cmd_consulta_Click(sender As Object, e As EventArgs) Handles cmd_consulta.Click
+        frm_consulprove.ShowDialog()
+    End Sub
+
+    Private Sub cmd_modificar_Click(sender As Object, e As EventArgs) Handles cmd_modificar.Click
+        modificar()
+        cargar_grilla_provee()
+        Me.cmd_modificar.Enabled = False
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.txt_id.Focus()
+    End Sub
+
+    Private Sub modificar()
+        Dim modificacion As String = ""
+        modificacion = "update Proveedores "
+        modificacion &= "set nombres = '" & Me.txt_nombre.Text & "'"
+        modificacion &= ",apellido = '" & Me.txt_apellido.Text & "'"
+        modificacion &= ",calle = '" & Me.txt_calle.Text & "'"
+        modificacion &= ",numero = " & Me.msktxt_nro.Text
+        modificacion &= ",localidad =  '" & Me.txt_localidad.Text & "'"
+        modificacion &= ",telefono = '" & Me.msktxt_telefono.Text & "'"
+        modificacion &= ",mail = '" & Me.txt_email.Text & "'"
+        modificacion &= "where id_proveedores = " & Me.txt_id.Text
+        Me.CONSULTA.Modificacion(modificacion)
+    End Sub
+
+    Private Sub grid_clientes_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles grid_provee.CellDoubleClick
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        completarGrilla()
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = True
+        Me.cmd_modificar.Enabled = True
+        Me.habilitar(True)
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+    End Sub
+
+    Private Sub completarGrilla()
+        Dim sql As String = ""
+        Dim tabla As New DataTable
+
+        sql = "SELECT * FROM Proveedores"
+        sql &= " WHERE id_proveedores = " & Me.grid_provee.CurrentRow.Cells(0).Value
+
+        tabla = CONSULTA.Consulta(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MessageBox.Show("No hay datos para recuperar")
+            Exit Sub
+        End If
+        Me.txt_id.Text = tabla.Rows(0)("id_proveedores")
+        Me.txt_nombre.Text = tabla.Rows(0)("nombres")
+        Me.txt_apellido.Text = tabla.Rows(0)("apellido")
+        Me.txt_calle.Text = tabla.Rows(0)("calle")
+        Me.msktxt_nro.Text = tabla.Rows(0)("numero")
+        Me.txt_localidad.Text = tabla.Rows(0)("localidad")
+        Me.msktxt_telefono.Text = tabla.Rows(0)("telefono")
+
+    End Sub
+
+
+
+
+    Private Sub insertar()
+        Dim insert As String = ""
+        insert = "insert into Proveedores ("
+        insert &= "id_proveedores, nombres, apellido, calle, numero, localidad, telefono, mail)"
+        insert &= "values(" & Me.txt_id.Text & ",'" & Me.txt_nombre.Text & "','" & Me.txt_apellido.Text & "','" & Me.txt_calle.Text
+        insert &= "'," & Me.msktxt_nro.Text & ",'" & Me.txt_localidad.Text & "','" & Me.msktxt_telefono.Text & "','" & Me.txt_email.Text & "')"
+        'MsgBox(insert)
+        Me.CONSULTA.Modificacion(insert)
+    End Sub
+
+    Private Sub cargar_grilla_provee()
+        Dim sql As String = ""
+        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores "
+
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_provee.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_provee.Rows(C).Cells(0).Value = tabla.Rows(C)("id_proveedores")
+            Me.grid_provee.Rows(C).Cells(1).Value = tabla.Rows(C)("nombres")
+            Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
+            Me.grid_provee.Rows(C).Cells(3).Value = tabla.Rows(C)("telefono")
+        Next
+    End Sub
+
+
+    Private Sub cmd_guardar_Click(sender As Object, e As EventArgs) Handles cmd_guardar.Click
+        If validarDatos() = True Then
+            txt_nombre.Text.TrimStart()
+            txt_nombre.Text.TrimEnd()
+
+            Me.insertar()
+            cargar_grilla_provee()
+
+            MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+
+            clearForm()
+            habilitar(False)
+            Me.cmd_guardar.Enabled = False
+            Me.cmd_cancelar.Enabled = False
+            Me.cmd_consulta.Enabled = True
+        ElseIf validarDatos() = False Then
+            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+        End If
+    End Sub
+
+
+
+    Private Sub generarIdProveedor()
+        Dim id As Integer = Me.CONSULTA.Consulta("select count(*) from Proveedores")(0)(0) + 1
+        Me.txt_id.Text = id
+    End Sub
+
+
+    
+    Private Sub cmd_cancelar_Click(sender As Object, e As EventArgs) Handles cmd_cancelar.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        Me.clearForm()
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.habilitar(False)
+    End Sub
+
+    Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
+        Dim txt_delete As String = ""
+        txt_delete &= "DELETE  FROM Proveedores WHERE id_proveedores = " + Me.txt_id.Text
+        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+            Exit Sub
+        End If
+        CONSULTA.Modificacion(txt_delete)
+        cargar_grilla_provee()
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        txt_id.Focus()
+
+    End Sub
+
+
+
+
+End Class
