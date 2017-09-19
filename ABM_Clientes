@@ -1,0 +1,457 @@
+Public Class frm_Clientes
+    'Dim CONSULTA As New Conexion
+    Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
+    Dim conexion As New Data.OleDb.OleDbConnection
+    Dim comando As New Data.OleDb.OleDbCommand
+
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar administacion de clientes?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+
+    Private Sub frm_Clientes_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        msktxt_nroDoc.Focus()
+        cargarCombo(cmb_tipoDoc, leoTabla("SELECT * FROM tipoDoc"), "idTipoDoc", "nombre")
+        cargar_grilla_clientes()
+    End Sub
+
+
+    '--- BOTONES ---'
+    ''' <summary>
+    ''' Boton Nuevo
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks></remarks>
+
+    Private Sub cmd_nuevo_Click(sender As Object, e As EventArgs) Handles cmd_nuevo.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        Me.blanquiar()
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = True
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+        Me.msktxt_nroDoc.Focus()
+    End Sub
+
+    Private Sub blanquiar()
+        habilitar(True)
+        clearForm()
+    End Sub
+
+    ''' <summary>
+    ''' Boton Guardar
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks></remarks>
+
+
+    Private Sub cmd_guardar_Click(sender As Object, e As EventArgs) Handles cmd_guardar.Click
+        If validarDatos() = True Then
+            If validarExistencia("Cliente") = False Then
+                MsgBox("Ya se encuentra registrado el usuario con documento " + msktxt_nroDoc.Text, MsgBoxStyle.Exclamation)
+                msktxt_nroDoc.Focus()
+            Else
+                txt_nombre.Text.TrimStart()
+                txt_nombre.Text.TrimEnd()
+
+                Me.insertar()
+                cargar_grilla_clientes()
+
+                MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+
+                clearForm()
+                habilitar(False)
+                Me.cmd_guardar.Enabled = False
+                Me.cmd_cancelar.Enabled = False
+                Me.cmd_consulta.Enabled = True
+            End If
+        ElseIf validarDatos() = False Then
+            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+        End If
+    End Sub
+
+
+    ''' <summary>
+    ''' Boton Modificar
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks></remarks>
+
+
+    Private Sub cmd_modificar_Click(sender As Object, e As EventArgs) Handles cmd_modificar.Click
+        modificar()
+        cargar_grilla_clientes()
+        Me.cmd_modificar.Enabled = False
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.msktxt_nroDoc.Focus()
+    End Sub
+
+
+    ''' <summary>
+    ''' Boton Eliminar
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks></remarks>
+
+
+    Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
+        Dim txt_delete As String = ""
+        txt_delete &= "DELETE  FROM cliente WHERE nroDoc = " + Me.msktxt_nroDoc.Text
+        txt_delete &= "AND tipoDoc = " + Me.cmb_tipoDoc.SelectedValue.ToString
+        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+            Exit Sub
+        End If
+        ejecutarIUD(txt_delete)
+        cargar_grilla_clientes()
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.msktxt_nroDoc.Focus()
+    End Sub
+
+
+    ''' <summary>
+    ''' Boton Cancelar
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks></remarks>
+
+
+    Private Sub cmd_cancelar_Click(sender As Object, e As EventArgs) Handles cmd_cancelar.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        Me.clearForm()
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.habilitar(False)
+    End Sub
+
+
+    Private Sub cmd_consulta_Click(sender As Object, e As EventArgs) Handles cmd_consulta.Click
+        frm_consulCli.ShowDialog()
+    End Sub
+
+
+    '--- SUBRUTINAS Y FUNCIONES ---'
+    Private Sub habilitar(ByVal valor As Boolean)
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Enabled = valor
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                obj.Enabled = valor
+            End If
+        Next
+    End Sub
+
+
+    ''' <summary>
+    ''' Carga combo con parametro especificos.
+    ''' </summary>
+    ''' <param name="combo"></param>
+    ''' <param name="tabla"></param>
+    ''' <param name="pk"></param>
+    ''' <param name="description"></param>
+    ''' <remarks></remarks>
+
+
+    Private Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+
+    'ESTE NO SE USA PORQUE CAMBIAMOS A LA GRILLA (DATAGRIDVIEW)
+    'Private Function leoPersona(ByVal nombreTabla As String) As Data.DataTable
+    '    Dim tabla As New Data.DataTable
+    '    Me.conexion.ConnectionString = cadenaConexion
+    '    Me.conexion.Open()
+
+    '    Me.comando.Connection = conexion
+    '    Me.comando.CommandType = CommandType.Text
+    '    Me.comando.CommandText = "Select apellido+', '+nombres as nombres, nroDoc as documento from " & nombreTabla
+
+    '    tabla.Load(comando.ExecuteReader())
+
+    '    Me.conexion.Close()
+    '    Return tabla
+    'End Function
+
+    'NO SE CARGA LISTA
+    'Private Sub cargarLista(ByRef lista As ListBox, ByRef tablas As Data.DataTable)
+    '    lista.DataSource = tablas
+    '    lista.DisplayMember = "nombres"
+    '    lista.ValueMember = "documento"
+    'End Sub
+
+
+    Private Sub cargar_grilla_clientes()
+        Dim sql As String = ""
+        sql &= "SELECT c.nombres , c.apellido ,c.nroDoc, c.tipoDoc FROM cliente c"
+
+        Dim tabla As New DataTable
+        tabla = leoTabla(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_clientes.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_clientes.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_clientes.Rows(C).Cells(0).Value = tabla.Rows(C)("nombres")
+            Me.grid_clientes.Rows(C).Cells(1).Value = tabla.Rows(C)("apellido")
+            Me.grid_clientes.Rows(C).Cells(2).Value = tabla.Rows(C)("nroDoc")
+            Me.grid_clientes.Rows(C).Cells(3).Value = tabla.Rows(C)("tipoDoc")
+        Next
+    End Sub
+
+
+    Private Sub grid_clientes_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles grid_clientes.CellDoubleClick
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        completarGrilla()
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = True
+        Me.cmd_modificar.Enabled = True
+        Me.habilitar(True)
+        Me.msktxt_nroDoc.Enabled = False
+        Me.cmb_tipoDoc.Enabled = False
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+    End Sub
+
+    Private Sub completarGrilla()
+        Dim sql As String = ""
+        Dim tabla As New DataTable
+
+        sql = "SELECT * FROM cliente"
+        sql &= " WHERE nroDoc = " & Me.grid_clientes.CurrentRow.Cells(2).Value
+        sql &= " AND tipoDoc = " & Me.grid_clientes.CurrentRow.Cells(3).Value
+
+        tabla = leoTabla(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MessageBox.Show("No hay datos para recuperar")
+            Exit Sub
+        End If
+
+        Me.txt_nombre.Text = tabla.Rows(0)("nombres")
+        Me.txt_apellido.Text = tabla.Rows(0)("apellido")
+        Me.txt_calle.Text = tabla.Rows(0)("calle")
+        Me.msktxt_nro.Text = tabla.Rows(0)("nro")
+        Me.msktxt_nroDoc.Text = tabla.Rows(0)("nroDoc")
+        Me.msktxt_telefono.Text = tabla.Rows(0)("telefono")
+        Me.cmb_tipoDoc.SelectedValue = tabla.Rows(0)("tipoDoc")
+    End Sub
+
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+
+    Private Function validarExistencia(ByVal tabla As String) As Boolean
+        Dim tablita As New DataTable
+        Dim sql As String = "SELECT * FROM " + tabla + " WHERE nroDoc = " + Me.msktxt_nroDoc.Text + " AND tipoDoc = " + (cmb_tipoDoc.SelectedValue).ToString
+        tablita = leoTabla(sql)
+        If tablita.Rows.Count = 1 Then
+            Return False
+        End If
+        Return True
+    End Function
+
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+        Next
+    End Sub
+
+
+    Private Function verificarCasillas() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text <> "" Then
+                    If obj.Name <> "msktxt_telefono" Then
+                        Return False
+                    End If
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+
+    '--- FUNCIONES DE CONEXION ---'
+    Private Sub insertar()
+        Dim txt_insert As String
+        txt_insert = "INSERT INTO cliente (nroDoc , tipoDoc , nombres, apellido , telefono , calle, nro)"
+        txt_insert &= "VALUES (" & msktxt_nroDoc.Text.TrimStart.TrimEnd
+        txt_insert &= "," & cmb_tipoDoc.SelectedValue()
+        txt_insert &= ",'" & txt_nombre.Text.TrimStart.TrimEnd
+        txt_insert &= "','" & txt_apellido.Text.TrimStart.TrimEnd
+        txt_insert &= "'," & msktxt_telefono.TextMaskFormat
+        txt_insert &= ",'" & txt_calle.Text.TrimStart.TrimEnd
+        txt_insert &= "'," & msktxt_nro.TextMaskFormat
+        txt_insert &= ")"
+
+        ejecutarIUD(txt_insert)
+    End Sub
+
+
+    Private Sub modificar()
+        Dim txt_update As String = "UPDATE cliente SET "
+        txt_update &= "apellido = '" & Me.txt_apellido.Text & "'"
+        txt_update &= ", nombres = '" & Me.txt_nombre.Text & "'"
+        txt_update &= ", telefono = '" & Me.msktxt_telefono.Text & "'"
+        txt_update &= ", calle = '" & Me.txt_calle.Text & "'"
+        txt_update &= ", nro = " & Me.msktxt_nro.TextMaskFormat
+        txt_update &= " WHERE nroDoc = " & Me.msktxt_nroDoc.Text
+        txt_update &= " AND tipoDoc = " & Me.cmb_tipoDoc.SelectedValue
+        ejecutarIUD(txt_update)
+    End Sub
+
+
+    Private Sub ejecutarIUD(ByVal txt_accion As String)
+        Me.conexion.ConnectionString = cadenaConexion
+        Me.conexion.Open()
+
+        Me.comando.Connection = conexion
+        Me.comando.CommandType = CommandType.Text
+        Me.comando.CommandText = txt_accion
+        Me.comando.ExecuteNonQuery()
+
+        Me.conexion.Close()
+    End Sub
+
+
+    ''' <summary>
+    ''' Leo Tabla de Juani ajaja
+    ''' </summary>
+    ''' <param name="codSQL"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+
+
+    Private Function leoTabla(ByVal codSQL As String) As Data.DataTable
+        Dim tabla As New Data.DataTable
+        Me.conexion.ConnectionString = cadenaConexion
+        Me.conexion.Open()
+
+        Me.comando.Connection = conexion
+        Me.comando.CommandType = CommandType.Text
+        Me.comando.CommandText = codSQL
+
+        tabla.Load(comando.ExecuteReader())
+
+        Me.conexion.Close()
+        Return tabla
+    End Function
+
+
+    'Validar casillas -----------------------------------------
+    Private Sub txt_nombre_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txt_nombre.KeyPress
+        validarLetras(e)
+    End Sub
+
+
+    Private Sub txt_apellido_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txt_apellido.KeyPress
+        validarLetras(e)
+    End Sub
+
+
+    Private Sub validarLetras(e As KeyPressEventArgs)
+        If Char.IsPunctuation(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsDigit(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSymbol(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsWhiteSpace(e.KeyChar) Then
+            e.Handled = True
+        Else
+            e.Handled = False
+        End If
+    End Sub
+
+
+    Private Sub msktxt_nroDoc_KeyPress(sender As Object, e As KeyPressEventArgs) Handles msktxt_nroDoc.KeyPress
+        validarDigito(e)
+    End Sub
+
+
+    Private Sub validarDigito(e As KeyPressEventArgs)
+        If Char.IsPunctuation(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsDigit(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSymbol(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsWhiteSpace(e.KeyChar) Then
+            e.Handled = True
+        Else
+            e.Handled = True
+        End If
+    End Sub
+End Class
+
