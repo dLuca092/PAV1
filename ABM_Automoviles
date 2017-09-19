@@ -1,0 +1,292 @@
+Public Class frm_Auto
+    Dim CONSULTA As New Conexion
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar gestion de Automoviles?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+    Private Function validarExistencia(ByVal tabla As String) As Boolean
+        Dim tablita As New DataTable
+        Dim sql As String = "SELECT * FROM " + tabla + " WHERE patente = '" + txt_patente.Text + "'"
+        tablita = CONSULTA.Consulta(sql)
+        If tablita.Rows.Count = 1 Then
+            Return False
+        End If
+        Return True
+    End Function
+
+    Private Sub frm_Auto_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        txt_patente.Focus()
+        cargarCombo(cmb_tipoDoc, CONSULTA.Consulta("SELECT * FROM tipoDoc"), "idTipoDoc", "nombre")
+        cargar_grilla_auto()
+    End Sub
+
+    Private Sub cmd_nuevo_Click(sender As Object, e As EventArgs) Handles cmd_nuevo.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        clearForm()
+        Me.habilitar(False)
+        Me.msktxt_nroDoc.Enabled = True
+        Me.cmb_tipoDoc.Enabled = True
+
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = True
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+        Me.cmd_Buscar.Enabled = True
+        Me.msktxt_nroDoc.Focus()
+    End Sub
+
+
+    Private Sub blanquiar()
+        habilitar(True)
+        clearForm()
+    End Sub
+
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+        Next
+    End Sub
+
+
+    Private Function verificarCasillas() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text <> "" Then
+                    If obj.Name <> "msktxt_telefono" Then
+                        Return False
+                    End If
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Sub habilitar(ByVal valor As Boolean)
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Enabled = valor
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                obj.Enabled = valor
+            End If
+        Next
+    End Sub
+
+    Private Sub cmd_consulta_Click(sender As Object, e As EventArgs) Handles cmd_consulta.Click
+        ConsultaAuto.ShowDialog()
+    End Sub
+
+    Private Sub cmd_modificar_Click(sender As Object, e As EventArgs) Handles cmd_modificar.Click
+        modificar()
+        cargar_grilla_auto()
+        Me.cmd_modificar.Enabled = False
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.txt_marca.Focus()
+    End Sub
+
+    Private Sub modificar()
+        Dim modificacion As String = ""
+        modificacion = "update automovil "
+        modificacion &= "set marca = '" & Me.txt_marca.Text & "'"
+        modificacion &= ",color = '" & Me.txt_color.Text & "'"
+        modificacion &= ",Clientes_NroDoc = '" & Me.msktxt_nroDoc.Text & "'"
+        modificacion &= ", Clientes_tipoDoc = '" & Me.cmb_tipoDoc.SelectedValue & "'"
+        modificacion &= "where patente = '" & Me.txt_patente.Text & "'"
+        Me.CONSULTA.Modificacion(modificacion)
+    End Sub
+
+    Private Sub grid_clientes_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles grid_auto.CellDoubleClick
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        completarGrilla()
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = True
+        Me.cmd_modificar.Enabled = True
+        Me.habilitar(True)
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+    End Sub
+
+    Private Sub completarGrilla()
+        Dim sql As String = ""
+        Dim tabla As New DataTable
+
+        sql = "SELECT * FROM automovil"
+        sql &= " WHERE patente = '" & Me.grid_auto.CurrentRow.Cells(0).Value & "'"
+
+        tabla = CONSULTA.Consulta(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MessageBox.Show("No hay datos para recuperar")
+            Exit Sub
+        End If
+        Me.txt_patente.Text = tabla.Rows(0)("patente")
+        Me.txt_marca.Text = tabla.Rows(0)("marca")
+        Me.txt_color.Text = tabla.Rows(0)("color")
+        Me.msktxt_nroDoc.Text = tabla.Rows(0)("Clientes_NroDoc")
+        Me.cmb_tipoDoc.SelectedValue = tabla.Rows(0)("Clientes_tipoDoc")
+
+    End Sub
+
+
+
+
+    Private Sub insertar()
+
+        Dim insert As String = ""
+        insert = "insert into automovil ("
+        insert &= "patente, marca, color, Clientes_NroDoc, Clientes_tipoDoc)"
+        insert &= "values('" & Me.txt_patente.Text & "','" & Me.txt_marca.Text & "','" & Me.txt_color.Text & "','" & Me.msktxt_nroDoc.Text
+        insert &= "'," & Me.cmb_tipoDoc.SelectedValue() & ")"
+        'MsgBox(insert)
+        Me.CONSULTA.Modificacion(insert)
+
+
+    End Sub
+
+    Private Sub cargar_grilla_auto()
+        Dim sql As String = ""
+        sql &= "SELECT patente , marca ,color, Clientes_NroDoc , Clientes_tipoDoc FROM automovil "
+
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_auto.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_auto.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_auto.Rows(C).Cells(0).Value = tabla.Rows(C)("patente")
+            Me.grid_auto.Rows(C).Cells(1).Value = tabla.Rows(C)("marca")
+            Me.grid_auto.Rows(C).Cells(2).Value = tabla.Rows(C)("color")
+            Me.grid_auto.Rows(C).Cells(3).Value = tabla.Rows(C)("Clientes_NroDoc")
+            Me.grid_auto.Rows(C).Cells(4).Value = tabla.Rows(C)("Clientes_tipoDoc")
+        Next
+    End Sub
+
+
+    Private Sub cmd_guardar_Click(sender As Object, e As EventArgs) Handles cmd_guardar.Click
+
+        If validarDatos() = True Then
+            If validarExistencia("automovil") = False Then
+                MsgBox("Ya se encuentra registrada la patente " + txt_patente.Text, MsgBoxStyle.Exclamation)
+                txt_patente.Focus()
+            Else
+
+
+                Me.insertar()
+                cargar_grilla_auto()
+                MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+
+                clearForm()
+                habilitar(False)
+                Me.cmd_guardar.Enabled = False
+                Me.cmd_cancelar.Enabled = False
+                Me.cmd_consulta.Enabled = True
+            End If
+        ElseIf validarDatos() = False Then
+            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+        End If
+    End Sub
+
+    Private Sub cmd_cancelar_Click(sender As Object, e As EventArgs) Handles cmd_cancelar.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        Me.clearForm()
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.habilitar(False)
+    End Sub
+
+    Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
+        Dim txt_delete As String = ""
+        txt_delete &= "DELETE  FROM automovil WHERE patente = '" + Me.txt_patente.Text + "'"
+        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+            Exit Sub
+        End If
+        CONSULTA.Modificacion(txt_delete)
+        cargar_grilla_auto()
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+
+    End Sub
+
+    Private Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+
+
+
+    Private Sub cmd_Buscar_Click(sender As Object, e As EventArgs) Handles cmd_Buscar.Click
+        Dim doc As String = ""
+        Dim tabla As New DataTable
+        doc &= "select nroDoc,tipoDoc from cliente where nroDoc = " & msktxt_nroDoc.Text & "And tipoDoc =" & cmb_tipoDoc.SelectedValue()
+        tabla = Me.CONSULTA.Consulta(doc)
+        habilitar(False)
+        Me.msktxt_nroDoc.Enabled = True
+        Me.cmb_tipoDoc.Enabled = True
+        If tabla.Rows.Count = 1 Then
+            habilitar(True)
+            txt_patente.Focus()
+        Else
+            MsgBox("El Cliente con el Documento: '" & msktxt_nroDoc.Text & "' y '" & cmb_tipoDoc.SelectedValue & "' , No Existe.Ingrese de nuevo.")
+            msktxt_nroDoc.Focus()
+        End If
+    End Sub
+End Class
