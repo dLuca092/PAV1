@@ -1,0 +1,121 @@
+Public Class frm_consulprove
+    Dim CONSULTA As New Conexion
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar consulta de clientes?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+        Me.borrar_grilla_provee()
+        Me.clearForm()
+    End Sub
+
+    Private Sub frm_consulprove_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.txt_nombre.Focus()
+    End Sub
+
+    Private Sub cargar_grilla_provee()
+        Dim sql As String = ""
+        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "' AND apellido= '" + Me.txt_apellido.Text + "'"
+
+        txt_nombre.Focus()
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MsgBox("No se han encontrado Nadie con ese Nombre")
+            Me.txt_nombre.Focus()
+
+        Else
+            Dim C As Integer ' --Colocamos un contador llamado C'
+            Me.grid_provee.Rows.Clear()
+            For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+                Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
+                Me.grid_provee.Rows(C).Cells(0).Value = tabla.Rows(C)("id_proveedores")
+                Me.grid_provee.Rows(C).Cells(1).Value = tabla.Rows(C)("nombres")
+                Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
+                Me.grid_provee.Rows(C).Cells(3).Value = tabla.Rows(C)("telefono")
+
+            Next
+        End If
+
+        
+    End Sub
+
+
+    Private Sub borrar_grilla_provee()
+        Dim sql As String = ""
+        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "' OR apellido= '" + Me.txt_apellido.Text + "' OR nombres = '" + Me.txt_nombre.Text + "' AND apellido= '" + Me.txt_apellido.Text + "'"
+
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_provee.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_provee.Rows(C).Cells(0).Value = ""
+            Me.grid_provee.Rows(C).Cells(1).Value = ""
+            Me.grid_provee.Rows(C).Cells(2).Value = ""
+            Me.grid_provee.Rows(C).Cells(3).Value = ""
+        Next
+    End Sub
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+        Next
+    End Sub
+
+    Private Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+
+    Private Sub btn_bucar_Click(sender As Object, e As EventArgs) Handles btn_bucar.Click
+        Me.txt_nombre.Focus()
+        borrar_grilla_provee()
+
+        If validarDatos() = True Then
+            txt_nombre.Text.TrimStart()
+            txt_nombre.Text.TrimEnd()
+
+            cargar_grilla_provee()
+
+        ElseIf validarDatos() = False Then
+            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+        End If
+
+        '    If validarDatos() = True Then
+        '        txt_nombre
+        '        cargar_grilla_provee()
+        '    ElseIf validarDatos() = False Then
+        '        MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+        '    End If
+    End Sub
+End Class
