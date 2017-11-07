@@ -8,6 +8,9 @@ Public Class frm_AbmProveedores
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         If MessageBox.Show("Cerrar gestion de Proveedores?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
+            Dim sql As String = ""
+            sql &= "delete from Proveedores where borrado = 1"
+            Me.CONSULTA.Consulta(sql)
             e.Cancel = False
         Else
             e.Cancel = True
@@ -123,7 +126,6 @@ Public Class frm_AbmProveedores
         Dim modificacion As String = ""
         modificacion = "update Proveedores "
         modificacion &= "set nombres = '" & Me.txt_nombre.Text & "'"
-        modificacion &= ",apellido = '" & Me.txt_apellido.Text & "'"
         modificacion &= ",calle = '" & Me.txt_calle.Text & "'"
         modificacion &= ",numero = " & Me.msktxt_nro.Text
         modificacion &= ",localidad =  '" & Me.txt_localidad.Text & "'"
@@ -146,6 +148,7 @@ Public Class frm_AbmProveedores
         Me.habilitar(True)
         Me.cmd_cancelar.Enabled = True
         Me.cmd_consulta.Enabled = False
+        Me.txt_id.Enabled = False
     End Sub
 
     Private Sub completarGrilla()
@@ -158,27 +161,25 @@ Public Class frm_AbmProveedores
         tabla = CONSULTA.Consulta(sql)
 
         If tabla.Rows.Count = 0 Then
-            MessageBox.Show("No hay datos para recuperar")
+            MessageBox.Show("No hay datos para recuperar", "Importante", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Exit Sub
         End If
         Me.txt_id.Text = tabla.Rows(0)("id_proveedores")
         Me.txt_nombre.Text = tabla.Rows(0)("nombres")
-        Me.txt_apellido.Text = tabla.Rows(0)("apellido")
+        'Me.txt_apellido.Text = tabla.Rows(0)("apellido")
         Me.txt_calle.Text = tabla.Rows(0)("calle")
         Me.msktxt_nro.Text = tabla.Rows(0)("numero")
         Me.txt_localidad.Text = tabla.Rows(0)("localidad")
         Me.msktxt_telefono.Text = tabla.Rows(0)("telefono")
+        Me.txt_email.Text = tabla.Rows(0)("mail")
 
     End Sub
-
-
-
 
     Private Sub insertar()
         Dim insert As String = ""
         insert = "insert into Proveedores ("
-        insert &= "id_proveedores, nombres, apellido, calle, numero, localidad, telefono, mail)"
-        insert &= "values(" & Me.txt_id.Text & ",'" & Me.txt_nombre.Text & "','" & Me.txt_apellido.Text & "','" & Me.txt_calle.Text
+        insert &= "id_proveedores, nombres, calle, numero, localidad, telefono, mail)"
+        insert &= "values(" & Me.txt_id.Text & ",'" & Me.txt_nombre.Text & "','" & Me.txt_calle.Text
         insert &= "'," & Me.msktxt_nro.Text & ",'" & Me.txt_localidad.Text & "','" & Me.msktxt_telefono.Text & "','" & Me.txt_email.Text & "')"
         'MsgBox(insert)
         Me.CONSULTA.Modificacion(insert)
@@ -186,7 +187,7 @@ Public Class frm_AbmProveedores
 
     Private Sub cargar_grilla_provee()
         Dim sql As String = ""
-        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores "
+        sql &= "SELECT id_proveedores , nombres, telefono FROM Proveedores "
 
         Dim tabla As New DataTable
         tabla = Me.CONSULTA.Consulta(sql)
@@ -197,8 +198,8 @@ Public Class frm_AbmProveedores
             Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
             Me.grid_provee.Rows(C).Cells(0).Value = tabla.Rows(C)("id_proveedores")
             Me.grid_provee.Rows(C).Cells(1).Value = tabla.Rows(C)("nombres")
-            Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
-            Me.grid_provee.Rows(C).Cells(3).Value = tabla.Rows(C)("telefono")
+            'Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
+            Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("telefono")
         Next
     End Sub
 
@@ -211,7 +212,7 @@ Public Class frm_AbmProveedores
             Me.insertar()
             cargar_grilla_provee()
 
-            MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+            MessageBox.Show("Se ha grabado con éxito", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
             clearForm()
             habilitar(False)
@@ -219,10 +220,9 @@ Public Class frm_AbmProveedores
             Me.cmd_cancelar.Enabled = False
             Me.cmd_consulta.Enabled = True
         ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+            MessageBox.Show("Falta completar datos.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Sub
-
 
 
     Private Sub generarIdProveedor()
@@ -231,7 +231,6 @@ Public Class frm_AbmProveedores
     End Sub
 
 
-    
     Private Sub cmd_cancelar_Click(sender As Object, e As EventArgs) Handles cmd_cancelar.Click
         If verificarCasillas() = False Then
             If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
@@ -249,13 +248,19 @@ Public Class frm_AbmProveedores
 
     Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
         Dim txt_delete As String = ""
-        txt_delete &= "DELETE  FROM Proveedores WHERE id_proveedores = " + Me.txt_id.Text
-        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
-                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
-            Exit Sub
+        If frm_login.per = 1 Then
+            txt_delete &= "DELETE  FROM Proveedores WHERE id_proveedores = " + Me.txt_id.Text
+            If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                      "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_provee()
+        ElseIf frm_login.per = 2 Then
+            txt_delete &= "update Proveedores set borrado = 1 WHERE id_proveedores = " + Me.txt_id.Text
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_provee()
         End If
-        CONSULTA.Modificacion(txt_delete)
-        cargar_grilla_provee()
         Me.blanquiar()
         Me.habilitar(False)
         Me.cmd_modificar.Enabled = False
@@ -264,10 +269,18 @@ Public Class frm_AbmProveedores
         Me.cmd_cancelar.Enabled = False
         Me.cmd_consulta.Enabled = True
         txt_id.Focus()
-
     End Sub
 
+    Private Sub txt_email_TextChanged(sender As Object, e As EventArgs) Handles txt_email.Leave
+        Dim mail As String = ""
+        Dim result As Boolean
 
+        result = txt_email.Text Like "*@*.com*"
 
+        If Not result Then
+            MessageBox.Show("El email no es valido.Ingrese nuevamente.")
+        End If
+    End Sub
 
+   
 End Class
