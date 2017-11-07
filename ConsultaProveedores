@@ -2,7 +2,7 @@ Public Class frm_consulprove
     Dim CONSULTA As New Conexion
 
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
-        If MessageBox.Show("Cerrar consulta de clientes?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        If MessageBox.Show("Cerrar consulta de proveedores?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
             e.Cancel = False
         Else
@@ -18,16 +18,17 @@ Public Class frm_consulprove
 
     Private Sub cargar_grilla_provee()
         Dim sql As String = ""
-        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "' AND apellido= '" + Me.txt_apellido.Text + "'"
+        If Me.txt_nombre.Text <> "" Then
+            sql &= "SELECT id_proveedores , nombres, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "'"
+        End If
 
         txt_nombre.Focus()
         Dim tabla As New DataTable
         tabla = Me.CONSULTA.Consulta(sql)
 
         If tabla.Rows.Count = 0 Then
-            MsgBox("No se han encontrado Nadie con ese Nombre")
+            MessageBox.Show("No se han encontrado Nadie con ese Nombre", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Me.txt_nombre.Focus()
-
         Else
             Dim C As Integer ' --Colocamos un contador llamado C'
             Me.grid_provee.Rows.Clear()
@@ -35,19 +36,16 @@ Public Class frm_consulprove
                 Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
                 Me.grid_provee.Rows(C).Cells(0).Value = tabla.Rows(C)("id_proveedores")
                 Me.grid_provee.Rows(C).Cells(1).Value = tabla.Rows(C)("nombres")
-                Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
-                Me.grid_provee.Rows(C).Cells(3).Value = tabla.Rows(C)("telefono")
-
+                ' Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("apellido")
+                Me.grid_provee.Rows(C).Cells(2).Value = tabla.Rows(C)("telefono")
             Next
         End If
-
-        
     End Sub
 
 
     Private Sub borrar_grilla_provee()
         Dim sql As String = ""
-        sql &= "SELECT id_proveedores , nombres ,apellido, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "' OR apellido= '" + Me.txt_apellido.Text + "' OR nombres = '" + Me.txt_nombre.Text + "' AND apellido= '" + Me.txt_apellido.Text + "'"
+        sql &= "SELECT id_proveedores , nombres, telefono FROM Proveedores WHERE nombres = '" + Me.txt_nombre.Text + "'"
 
         Dim tabla As New DataTable
         tabla = Me.CONSULTA.Consulta(sql)
@@ -58,8 +56,8 @@ Public Class frm_consulprove
             Me.grid_provee.Rows.Add()            '--Para añadir datos en el grid'
             Me.grid_provee.Rows(C).Cells(0).Value = ""
             Me.grid_provee.Rows(C).Cells(1).Value = ""
+            ' Me.grid_provee.Rows(C).Cells(2).Value = ""
             Me.grid_provee.Rows(C).Cells(2).Value = ""
-            Me.grid_provee.Rows(C).Cells(3).Value = ""
         Next
     End Sub
 
@@ -100,22 +98,8 @@ Public Class frm_consulprove
     Private Sub btn_bucar_Click(sender As Object, e As EventArgs) Handles btn_bucar.Click
         Me.txt_nombre.Focus()
         borrar_grilla_provee()
-
-        If validarDatos() = True Then
-            txt_nombre.Text.TrimStart()
-            txt_nombre.Text.TrimEnd()
-
-            cargar_grilla_provee()
-
-        ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
-        End If
-
-        '    If validarDatos() = True Then
-        '        txt_nombre
-        '        cargar_grilla_provee()
-        '    ElseIf validarDatos() = False Then
-        '        MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
-        '    End If
+        cargar_grilla_provee()
     End Sub
+
+    
 End Class
