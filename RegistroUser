@@ -1,0 +1,63 @@
+Public Class frm_RegistroUsuario
+    Dim CONSULTA As New Conexion
+
+    Private Sub cmd_registrar_Click(sender As Object, e As EventArgs) Handles cmd_registrar.Click
+        If validarDatos() = True Then
+            txt_nombre.Text.TrimStart()
+            txt_nombre.Text.TrimEnd()
+            If Me.txt_pass.Text = Me.txt_RepPass.Text Then
+                Me.insertar()
+                MessageBox.Show("Se ha grabado con éxito", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Me.Close()
+            Else
+                MessageBox.Show("Las constraseñas no coinciden", "Imporatnte", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                txt_pass.Focus()
+
+            End If
+            
+        ElseIf validarDatos() = False Then
+            MessageBox.Show("Falta completar datos.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+    End Sub
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+    Private Sub insertar()
+        Dim insert As String = ""
+        insert = "insert into usuario ("
+        insert &= "id_usuario, nombre, pass ,permisos)"
+        insert &= "values('" & Me.txt_id.Text & "','" & Me.txt_nombre.Text & "','" & Me.txt_pass.Text & "','" & Me.cmb_permisos.SelectedValue() & "')"
+
+        'MsgBox(insert)
+        Me.CONSULTA.Modificacion(insert)
+    End Sub
+
+    Private Sub frm_RegistroUsuario_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        cargarCombo(cmb_permisos, CONSULTA.Consulta("SELECT * FROM permisos"), "id_permisos", "nombre")
+
+    End Sub
+
+End Class
