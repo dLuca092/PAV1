@@ -1,5 +1,6 @@
 Public Class ConsultaAuto
     Dim CONSULTA As New Conexion
+
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         If MessageBox.Show("Cerrar consulta de automoviles?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
@@ -23,7 +24,7 @@ Public Class ConsultaAuto
         tabla = CONSULTA.Consulta(sql)
 
         If tabla.Rows.Count = 0 Then
-            MsgBox("No se han encontrado Automoviles con esa patente")
+            MessageBox.Show("No se han encontrado Automoviles con esa patente", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Me.txt_patente.Focus()
         Else
             Dim C As Integer ' --Colocamos un contador llamado C'
@@ -48,7 +49,7 @@ Public Class ConsultaAuto
         tabla = CONSULTA.Consulta(sql)
 
         If tabla.Rows.Count = 0 Then
-            MsgBox("No se han encontrado Automoviles con esa patente")
+            MessageBox.Show("No se han encontrado Automoviles con esa patente", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Me.txt_patente.Focus()
         Else
             Dim C As Integer ' --Colocamos un contador llamado C'
@@ -104,7 +105,7 @@ Public Class ConsultaAuto
         If validarDatos() = True Then
             cargar_grilla_auto()
         ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Sub
 
