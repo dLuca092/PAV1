@@ -1,0 +1,152 @@
+Public Class frm_Presu
+    Dim CONSULTA As New Conexion
+
+    Private Property MyTran As OleDb.OleDbTransaction
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar aplicacion?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            clearForm()
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+   
+    Private Sub frm_Presu_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        lbl_fechayhora.Text = DateTime.Now
+        frm_factura.cargarCombo(cmb_tipoDoc, CONSULTA.Consulta("SELECT * FROM tipoDoc"), "idTipoDoc", "nombre")
+        Me.txt_Descrip.Focus()
+    End Sub
+
+    Private Sub cmd_buscarCliente_Click(sender As Object, e As EventArgs) Handles cmd_buscarCliente.Click
+        If Me.cmb_tipoDoc.Text <> "" And Me.txt_nroDoc.Text <> "" Then
+            Dim sql As String = "select * from cliente where nroDoc = " & txt_nroDoc.Text & " and tipoDoc = " & cmb_tipoDoc.SelectedValue
+            Dim tabla As New DataTable
+            tabla = CONSULTA.Consulta(sql)
+            Me.txt_patente.Enabled = True
+            If tabla.Rows.Count = 0 Then
+                MessageBox.Show("El cliente no existe. Por Favor ingrese nuevamente el cliente", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                Me.txt_patente.Enabled = False
+            End If
+        Else
+            MessageBox.Show("Faltan datos por completa!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+
+    End Sub
+
+    Private Sub btn_BusPatente_Click(sender As Object, e As EventArgs) Handles btn_BusPatente.Click
+        If Me.txt_patente.Text <> "" Then
+            Dim sql1 As String = "select * from automovil where patente = '" & txt_patente.Text & "' and nroDoc = " & txt_nroDoc.Text & " and tipoDoc = " & cmb_tipoDoc.SelectedValue
+            Dim tabla As New DataTable
+            tabla = CONSULTA.Consulta(sql1)
+
+            If tabla.Rows.Count = 0 Then
+                MessageBox.Show("La patente no existe. Por Favor registre la patente", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                Me.txt_Importe.Enabled = False
+            Else
+                Me.txt_Importe.Enabled = True
+            End If
+        Else
+            MessageBox.Show("Faltan datos por completar!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+    End Sub
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                O.SelectedIndex = -1
+            End If
+        Next
+    End Sub
+
+    Private Sub btn_Nuevo_Click(sender As Object, e As EventArgs) Handles btn_Nuevo.Click
+        clearForm()
+        Me.txt_patente.Enabled = False
+        Me.txt_Importe.Enabled = False
+        lbl_fechayhora.Text = DateTime.Now
+    End Sub
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+
+    Private Sub btn_Guardar_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_Guardar.Click
+        'Dim cadenaConexion = "Provider=SQLNCLI11;Data Source=LAPTOP-EMIGNQ7D\DAMSQL;Integrated Security=SSPI;Initial Catalog=TALLER2"
+        Dim cadenaConexion = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
+        Dim con As New Data.OleDb.OleDbConnection(cadenaConexion)
+        con.Open()
+        MyTran = con.BeginTransaction()
+        If validarDatos() = True Then
+
+            Try
+                Dim sql As String = ""
+                sql += "insert presupuesto(descri,nroDoc,tipoDoc,patente,fecha,importe)"
+                sql += "values('" + txt_Descrip.Text + "'," + txt_nroDoc.Text + "," + cmb_tipoDoc.SelectedValue.ToString + ",'" + txt_patente.Text + "','"
+                sql += lbl_fechayhora.Text.ToString() + "'," + txt_Importe.Text + ")"
+                'MsgBox("el inser sehace asi =   " & sql)
+                CONSULTA.Modificacion(sql)
+                MsgBox("El presupuesto se guardó Correctamente")
+                MyTran.Commit()
+                clearForm()
+            Catch
+                MsgBox("El prespuesto NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO se guardó")
+                MyTran.Rollback()
+            Finally
+                con.Close()
+            End Try
+        Else
+            MessageBox.Show("Falta cargar datos!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+
+        Me.btn_Nuevo.PerformClick()
+    End Sub
+
+    Private Sub txt_Importe_TextChanged(sender As Object, e As EventArgs) Handles txt_Importe.KeyPress
+        'validarDigito(e)
+    End Sub
+
+    Private Sub validarDigito(e As KeyPressEventArgs)
+        If Char.IsPunctuation(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsDigit(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSymbol(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsWhiteSpace(e.KeyChar) Then
+            e.Handled = True
+        Else
+            e.Handled = True
+        End If
+    End Sub
+
+
+    Private Sub txt_Importe_TextChanged_1(sender As Object, e As EventArgs) Handles txt_Importe.TextChanged
+        'validarDigito(e)
+    End Sub
+End Class
