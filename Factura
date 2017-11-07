@@ -1,0 +1,292 @@
+Public Class frm_factura
+    Dim CONSULTA As New Conexion
+    Dim cadenaConexion As String
+    Public total As Single
+    Private Property MyTran As OleDb.OleDbTransaction
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar aplicacion?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+    Private Sub frm_factura_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        cmb_tipoFac.Focus()
+        cargarCombo(cmb_tipoDoc, CONSULTA.Consulta("SELECT * FROM tipoDoc"), "idTipoDoc", "nombre")
+        cargarCombo(cmb_tipoFac, CONSULTA.Consulta("SELECT * FROM tipoFac"), "idTipoFac", "nombre")
+        cargarCombo(cmb_NomRepues, CONSULTA.Consulta("select * from repuesto"), "idRepuesto", "nombre")
+        cargarCombo(cmb_NomServicio, CONSULTA.Consulta("select * from servicioReparacion"), "idSerReparacion", "nombre")
+        Me.txt_fecha.Text = Date.Now.ToString("dd/MM/yyyy")
+        lbl_fechayhora.Text = DateTime.Now
+    End Sub
+
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                O.SelectedIndex = -1
+            End If
+        Next
+    End Sub
+
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Friend Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+
+    Private Sub habilitar(ByVal valor As Boolean)
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Enabled = valor
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                obj.Enabled = valor
+            End If
+        Next
+    End Sub
+
+
+
+    Private Sub cmd_buscarCliente_Click(sender As Object, e As EventArgs) Handles cmd_buscarCliente.Click
+        If Me.cmb_tipoDoc.Text <> "" And Me.txt_nroDoc.Text <> "" Then
+            Dim sql As String = ""
+            Dim tabla As New DataTable
+            sql &= "select * from cliente where nroDoc = " & txt_nroDoc.Text & " and tipoDoc = " & cmb_tipoDoc.SelectedValue
+            tabla = CONSULTA.Consulta(sql)
+            If tabla.Rows.Count = 0 Then
+                MessageBox.Show("El cliente no existe. Por Favor ingrese nuevamente el cliente", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Me.cmd_agregarRep.Enabled = False
+                Me.cmd_AgregarServ.Enabled = False
+                Me.cmd_QuitarRep.Enabled = False
+                Me.cmd_nuevo.Enabled = False
+                Me.cmd_guardar.Enabled = False
+            Else
+                Me.cmd_agregarRep.Enabled = True
+                Me.cmd_AgregarServ.Enabled = True
+                Me.cmd_QuitarRep.Enabled = True
+                Me.cmd_nuevo.Enabled = True
+                Me.cmd_guardar.Enabled = True
+            End If
+        Else
+            MessageBox.Show("Faltan datos por completa!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+
+        End If
+    End Sub
+
+    Private Sub txt_nroDoc_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txt_nroDoc.KeyPress
+        If Char.IsNumber(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        Else : e.Handled = True
+        End If
+    End Sub
+
+    Private Sub cmd_agregarRep_Click_1(sender As Object, e As EventArgs) Handles cmd_agregarRep.Click
+        If cmb_NomRepues.Text <> "" And txt_cantRep.Text <> "" Then
+            Dim consul As String = "Select idRepuesto, precioUnitario from Repuesto where nombre = '" & Me.cmb_NomRepues.Text & "'"
+            Dim dt As Data.DataTable = CONSULTA.Consulta(consul)
+            Dim id As String = dt(0)(0).ToString()
+            Dim precio As Integer = dt(0)(1)
+            Dim subTot As Integer = precio * Me.txt_cantRep.Text
+            grid_Factura.Rows.Add(id, Me.cmb_NomRepues.Text, precio, Me.txt_cantRep.Text, subTot)
+            Me.cmb_NomRepues.Text = ""
+            Me.txt_cantRep.Text = ""
+        End If
+    End Sub
+
+
+    Private Sub cmd_AgregarServ_Click(sender As Object, e As EventArgs) Handles cmd_AgregarServ.Click
+        If cmb_NomServicio.Text <> "" And txt_cantServ.Text <> "" Then
+            Dim consul As String = "Select idSerReparacion, precioUnitario from servicioReparacion where nombre = '" & Me.cmb_NomServicio.Text & "'"
+            Dim dt As Data.DataTable = CONSULTA.Consulta(consul)
+            Dim id As String = dt(0)(0).ToString()
+            Dim precio As Integer = dt(0)(1)
+            Dim subTot As Integer = precio * Me.txt_cantServ.Text
+            grid_Factura.Rows.Add(id, Me.cmb_NomServicio.Text, precio, Me.txt_cantServ.Text, subTot)
+            Me.cmb_NomServicio.Text = ""
+            Me.txt_cantServ.Text = ""
+        End If
+    End Sub
+
+    Private Sub cmd_QuitarRep_Click(sender As Object, e As EventArgs) Handles cmd_QuitarRep.Click
+        If grid_Factura.Rows.Count() <> 0 Then
+            grid_Factura.Rows.Remove(grid_Factura.CurrentRow)
+        End If
+    End Sub
+
+    Private Sub btn_Calcular_Click(sender As Object, e As EventArgs) Handles btn_Calcular.Click
+        Dim col As Integer = Me.grid_Factura.CurrentCell.ColumnIndex
+        For Each row As DataGridViewRow In Me.grid_Factura.Rows
+            total += Val(row.Cells(4).Value)
+        Next
+        Me.txt_Total.Text = total.ToString()
+    End Sub
+
+    Private Sub txt_cantRep_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txt_cantRep.KeyPress
+        If Char.IsNumber(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        Else : e.Handled = True
+        End If
+    End Sub
+
+
+    Private Sub txt_cantServ_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txt_cantServ.KeyPress
+        If Char.IsNumber(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        Else : e.Handled = True
+        End If
+    End Sub
+
+
+    Private Sub cmd_guardar_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cmd_guardar.Click
+        Dim fila As DataGridViewRow
+        'Dim cadenaConexion = "Provider=SQLNCLI11;Data Source=LAPTOP-EMIGNQ7D\DAMSQL;Integrated Security=SSPI;Initial Catalog=TALLER2"
+        Dim cadenaConexion = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
+        Dim con As New Data.OleDb.OleDbConnection(cadenaConexion)
+        con.Open()
+        MyTran = con.BeginTransaction()
+        If grid_Factura.Rows.Count <> 0 Then
+            Try
+                Dim strSQLId As String = ""
+                Dim strSqldet As String = ""
+                Dim strSQLfac As String = "Insert Into factura (tipoFac, tipoDoc, nroDoc, fecha)"
+                strSQLfac = strSQLfac + "VALUES(" & Me.cmb_tipoFac.SelectedValue & "," & Me.cmb_tipoDoc.SelectedValue & "," & Me.txt_nroDoc.Text & ", '" & Me.lbl_fechayhora.Text & "')"
+                CONSULTA.Modificacion(strSQLfac)
+                'MsgBox("creo la factura  =   " + strSQLfac)
+                strSQLId &= "select idFactura from factura where tipoFac = " & cmb_tipoFac.SelectedValue & " AND fecha = '"
+                strSQLId &= lbl_fechayhora.Text & "' AND nroDoc =" & txt_nroDoc.Text & " AND tipoDoc = " & cmb_tipoDoc.SelectedValue
+                Dim tabla As New DataTable
+                Dim cantId As String
+                tabla = CONSULTA.Consulta(strSQLId)
+                cantId = tabla.Rows.Count()
+                'MsgBox("busco el id de la factura =   " + strSQLId)
+                For Each fila In grid_Factura.Rows
+                    'MsgBox("entro for each")
+                    Dim cod As Integer = fila.Cells(0).Value
+                    'MsgBox("veo el codigo =   " & cod)
+                    Dim nombre As String = fila.Cells(1).Value
+                    'MsgBox("veo el nombre =   " & nombre)
+                    Dim precios As Integer = fila.Cells("precio").Value
+                    'MsgBox("veo el precio = " & precios)
+                    Dim cantidad As Integer = fila.Cells("cantidad").Value
+                    'Dim subtotal As String = fila.Cells("SubTotal").Value
+                    'MsgBox("cantidad despues del for each =    " & cantidad)
+                    strSqldet = "Insert Into detalle (idFactura, tipoFactura, idItem, precio, cantidad )"
+                    strSqldet = strSqldet + "VALUES( " & tabla.Rows(cantId - 1)(0) & " , " & cmb_tipoFac.SelectedValue & " , " & cod & " , " & precios & ", " & cantidad & ")"
+                    'MsgBox("el codigo de insercion del detalle = " & strSqldet)
+                    CONSULTA.Modificacion(strSqldet)
+                    'MsgBox("ide de la factura despues de crear el detalle =    " & tabla.Rows(cantId - 1)(0))
+                    'MsgBox("antes del next")
+                    If cod < 100 Then
+                        Dim strSqlrep As String = "insert into detallexRepuesto(idFactura,tipoFactura,idItem,idRepuesto)VALUES( " & tabla.Rows(cantId - 1)(0) & " , " & cmb_tipoFac.SelectedValue & " , " & cod & "," & cod & ")"
+                        CONSULTA.Modificacion(strSqlrep)
+                    ElseIf cod >= 100 Then
+                        Dim strSqlser As String = "insert into detallexServicio(idFactura,tipoFactura,idItem,idserReparacion)VALUES( " & tabla.Rows(cantId - 1)(0) & " , " & cmb_tipoFac.SelectedValue & " , " & cod & "," & cod & ")"
+                        CONSULTA.Modificacion(strSqlser)
+                    End If
+                Next
+
+                'aca calculo el total
+                For Each row As DataGridViewRow In Me.grid_Factura.Rows
+                    total += Val(row.Cells(4).Value)
+                Next
+                'actualizo el montoTotal en la factura a partir de los detalles 
+                Dim strSqlMtot As String = ""
+                strSqlMtot = "UPDATE factura SET montoTotal = " & total & " where idFactura = " & tabla.Rows(cantId - 1)(0)
+                'MsgBox("como se ejecuta el update =" & strSqlMtot)
+                CONSULTA.Modificacion(strSqlMtot)
+
+                'MsgBox("SI")
+                grid_Factura.Rows.Clear()
+                'txt_Total.Text = 0
+
+
+                MsgBox("La Factura se guardó Correctamente")
+                MyTran.Commit()
+                'MsgBox("hago commmit")
+
+            Catch
+                MsgBox("La Factura NO se guardó")
+                MyTran.Rollback()
+            Finally
+                con.Close()
+            End Try
+        Else
+            MessageBox.Show("No hay datos por cargar en factura", "Importante", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+
+    End Sub
+
+
+    Private Sub cmd_nuevo_Click(sender As Object, e As EventArgs) Handles cmd_nuevo.Click
+        clearForm()
+        For i As Integer = 0 To Me.grid_Factura.RowCount - 1
+            Me.grid_Factura.Rows.Remove(Me.grid_Factura.CurrentRow)
+        Next
+        lbl_fechayhora.Text = DateTime.Now
+    End Sub
+
+    Private Sub txt_Total_TextChanged(sender As Object, e As EventArgs) Handles txt_Total.KeyPress
+        validarDigito(e)
+    End Sub
+
+    Private Sub validarDigito(e As KeyPressEventArgs)
+        If Char.IsPunctuation(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsDigit(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsControl(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsSymbol(e.KeyChar) Then
+            e.Handled = True
+        ElseIf Char.IsSeparator(e.KeyChar) Then
+            e.Handled = False
+        ElseIf Char.IsWhiteSpace(e.KeyChar) Then
+            e.Handled = True
+        Else
+            e.Handled = True
+        End If
+    End Sub
+
+    
+End Class
