@@ -3,18 +3,27 @@ Public Class frm_Menu
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         If MessageBox.Show("Cerrar aplicacion?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
+            frm_login.Close()
             e.Cancel = False
         Else
             e.Cancel = True
         End If
     End Sub
 
+    Private Sub frm_Menu_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        lbl_nomUsr.Text = frm_login.usr
+        lbl_nombreUser.Text = frm_login.nom
+        If frm_login.per = 1 Then
+            lbl_per.Text = "Administrador"
+        ElseIf frm_login.per = 2 Then
+            lbl_per.Text = "Normal User"
+        End If
+
+    End Sub
 
     Private Sub ClientesToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ClientesToolStripMenuItem.Click
         frm_Clientes.ShowDialog()
     End Sub
-
-
     Private Sub ProvedoresToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ProvedoresToolStripMenuItem.Click
         frm_AbmProveedores.ShowDialog()
     End Sub
@@ -23,4 +32,35 @@ Public Class frm_Menu
         frm_Auto.ShowDialog()
     End Sub
 
+    Private Sub RepuestosToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles RepuestosToolStripMenuItem.Click
+        frm_AMBRepuesto.ShowDialog()
+    End Sub
+
+    Private Sub CobroToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles CobroToolStripMenuItem.Click
+        frm_factura.ShowDialog()
+    End Sub
+
+    Private Sub PresupuestoToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles PresupuestoToolStripMenuItem.Click
+        frm_Presu.ShowDialog()
+    End Sub
+
+    Private Sub ClientesToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles ClientesToolStripMenuItem1.Click
+        frm_ReportCliente.ShowDialog()
+    End Sub
+
+    Private Sub PresupuestosToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles PresupuestosToolStripMenuItem.Click
+        frm_ReporPresup.ShowDialog()
+    End Sub
+
+    Private Sub RepuestosToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles RepuestosToolStripMenuItem1.Click
+        frm_ReporRepues.ShowDialog()
+    End Sub
+
+    Private Sub ProveedoresToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ProveedoresToolStripMenuItem.Click
+        frm_ReporProvee.ShowDialog()
+    End Sub
+
+    Private Sub FacturasToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles FacturasToolStripMenuItem.Click
+        frm_ReporFactura.ShowDialog()
+    End Sub
 End Class
