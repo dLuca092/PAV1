@@ -1,0 +1,273 @@
+Public Class frm_AMBRepuesto
+    Dim CONSULTA As New Conexion
+
+
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar gestion de Repuestos?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            Dim sql As String = ""
+            sql &= "delete from repuesto where borrado = 1"
+            Me.CONSULTA.Consulta(sql)
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+    Private Sub frm_ABMRepuesto_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        txt_nombre.Focus()
+        cargar_grilla_repuesto()
+    End Sub
+
+    Private Sub cmd_nuevo_Click(sender As Object, e As EventArgs) Handles cmd_nuevo.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+
+        Me.blanquiar()
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = True
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+        Me.txt_id.Enabled = False
+        Me.generarId()
+
+
+    End Sub
+
+
+    Private Sub blanquiar()
+        habilitar(True)
+        clearForm()
+    End Sub
+
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                O.SelectedIndex = -1
+            End If
+        Next
+    End Sub
+
+
+    Private Function verificarCasillas() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text <> "" Then
+                    If obj.Name <> "msktxt_telefono" Then
+                        Return False
+                    End If
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+    Private Sub habilitar(ByVal valor As Boolean)
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Enabled = valor
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                obj.Enabled = valor
+            End If
+        Next
+    End Sub
+
+    Private Sub cmd_consulta_Click(sender As Object, e As EventArgs) Handles cmd_consulta.Click
+        frm_consultaRepuesto.ShowDialog()
+    End Sub
+
+    Private Sub cmd_modificar_Click(sender As Object, e As EventArgs) Handles cmd_modificar.Click
+        modificar()
+        cargar_grilla_repuesto()
+        Me.cmd_modificar.Enabled = False
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.txt_id.Focus()
+    End Sub
+
+    Private Sub modificar()
+        Dim modificacion As String = ""
+            modificacion = "update repuesto "
+            modificacion &= "set nombre = '" & Me.txt_nombre.Text & "'"
+            modificacion &= ",descripcion = '" & Me.txt_desc.Text & "'"
+            modificacion &= ",precioUnitario = " & Me.txt_precio.Text
+            modificacion &= ",cantidad = " & Me.txt_Cantidad.Text
+            modificacion &= "where idRepuesto = " & Me.txt_id.Text
+            Me.CONSULTA.Modificacion(modificacion)
+    End Sub
+
+    Private Sub grid_clientes_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles grid_repuesto.CellDoubleClick
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        completarGrilla()
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = True
+        Me.cmd_modificar.Enabled = True
+        Me.habilitar(True)
+        Me.cmd_cancelar.Enabled = True
+        Me.cmd_consulta.Enabled = False
+        Me.txt_id.Enabled = False
+    End Sub
+
+    Private Sub completarGrilla()
+        Dim sql As String = ""
+        Dim tabla As New DataTable
+
+        sql = "SELECT * FROM repuesto"
+        sql &= " WHERE idRepuesto = " & Me.grid_repuesto.CurrentRow.Cells(0).Value
+
+        tabla = CONSULTA.Consulta(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MessageBox.Show("No hay datos para recuperar", "Informacion", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Exit Sub
+        End If
+        Me.txt_id.Text = tabla.Rows(0)("idRepuesto")
+        Me.txt_nombre.Text = tabla.Rows(0)("nombre")
+        Me.txt_desc.Text = tabla.Rows(0)("descripcion")
+        Me.txt_precio.Text = tabla.Rows(0)("precioUnitario")
+        Me.txt_Cantidad.Text = tabla.Rows(0)("cantidad")
+
+    End Sub
+
+    Private Sub insertar()
+        Dim insert As String = ""
+        insert = "insert into repuesto ("
+        insert &= "idRepuesto, nombre, descripcion, precioUnitario, cantidad)"
+        insert &= "values(" & Me.txt_id.Text & ",'" & Me.txt_nombre.Text & "','" & Me.txt_desc.Text & "'," & Me.txt_precio.Text & "," & Me.txt_Cantidad.Text & ")"
+        'MsgBox(insert)
+        Me.CONSULTA.Modificacion(insert)
+    End Sub
+
+    Private Sub cargar_grilla_repuesto()
+        Dim sql As String = ""
+        sql &= "SELECT idRepuesto , nombre , precioUnitario, cantidad FROM repuesto "
+
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_repuesto.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_repuesto.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_repuesto.Rows(C).Cells(0).Value = tabla.Rows(C)("idRepuesto")
+            Me.grid_repuesto.Rows(C).Cells(1).Value = tabla.Rows(C)("nombre")
+            Me.grid_repuesto.Rows(C).Cells(2).Value = tabla.Rows(C)("precioUnitario")
+            Me.grid_repuesto.Rows(C).Cells(3).Value = tabla.Rows(C)("cantidad")
+
+        Next
+    End Sub
+
+
+    Private Sub cmd_guardar_Click(sender As Object, e As EventArgs) Handles cmd_guardar.Click
+        If validarDatos() = True Then
+            txt_nombre.Text.TrimStart()
+            txt_nombre.Text.TrimEnd()
+
+            Me.insertar()
+            cargar_grilla_repuesto()
+
+            MessageBox.Show("Se ha grabado con éxito", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+            clearForm()
+            habilitar(False)
+            Me.cmd_guardar.Enabled = False
+            Me.cmd_cancelar.Enabled = False
+            Me.cmd_consulta.Enabled = True
+        ElseIf validarDatos() = False Then
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+    End Sub
+
+
+
+    Private Sub generarId()
+        Dim id As Integer = Me.CONSULTA.Consulta("select count(*) from repuesto")(0)(0) + 1
+        Me.txt_id.Text = id
+    End Sub
+
+
+
+    Private Sub cmd_cancelar_Click(sender As Object, e As EventArgs) Handles cmd_cancelar.Click
+        If verificarCasillas() = False Then
+            If MsgBox("Hay datos cargados. ¿Desea continuar con la operación?", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+        End If
+        Me.clearForm()
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.habilitar(False)
+    End Sub
+
+    Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
+        Dim txt_delete As String = ""
+
+        If frm_login.per = 1 Then
+            txt_delete &= "DELETE  FROM repuesto WHERE idRepuesto = " + Me.txt_id.Text
+            If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                      "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_repuesto()
+        ElseIf frm_login.per = 2 Then
+            txt_delete &= "update repuesto set borrado = 1 WHERE idRepuesto = " + Me.txt_id.Text
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_repuesto()
+        End If
+
+        
+        Me.blanquiar()
+        Me.habilitar(False)
+        Me.cmd_modificar.Enabled = False
+        Me.cmd_guardar.Enabled = False
+        Me.cmd_borrar.Enabled = False
+        Me.cmd_cancelar.Enabled = False
+        Me.cmd_consulta.Enabled = True
+        Me.txt_id.Focus()
+    End Sub
+End Class
+
+
