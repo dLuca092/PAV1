@@ -1,5 +1,6 @@
 Public Class frm_Clientes
     'Dim CONSULTA As New Conexion
+    'Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LAPTOP-EMIGNQ7D\DAMSQL;Integrated Security=SSPI;Initial Catalog=TALLER2"
     Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
     Dim conexion As New Data.OleDb.OleDbConnection
     Dim comando As New Data.OleDb.OleDbCommand
@@ -8,6 +9,9 @@ Public Class frm_Clientes
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         If MessageBox.Show("Cerrar administacion de clientes?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
+            Dim sql As String = ""
+            sql &= "delete from cliente where borrado = 1"
+            Me.ejecutarIUD(sql)
             e.Cancel = False
         Else
             e.Cancel = True
@@ -61,7 +65,7 @@ Public Class frm_Clientes
     Private Sub cmd_guardar_Click(sender As Object, e As EventArgs) Handles cmd_guardar.Click
         If validarDatos() = True Then
             If validarExistencia("Cliente") = False Then
-                MsgBox("Ya se encuentra registrado el usuario con documento " + msktxt_nroDoc.Text, MsgBoxStyle.Exclamation)
+                MessageBox.Show("Ya se encuentra registrado el usuario con documento " + msktxt_nroDoc.Text, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
                 msktxt_nroDoc.Focus()
             Else
                 txt_nombre.Text.TrimStart()
@@ -70,7 +74,7 @@ Public Class frm_Clientes
                 Me.insertar()
                 cargar_grilla_clientes()
 
-                MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+                MessageBox.Show("Se ha grabado con éxito", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
                 clearForm()
                 habilitar(False)
@@ -79,7 +83,7 @@ Public Class frm_Clientes
                 Me.cmd_consulta.Enabled = True
             End If
         ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Sub
 
@@ -116,15 +120,23 @@ Public Class frm_Clientes
 
 
     Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
+
         Dim txt_delete As String = ""
-        txt_delete &= "DELETE  FROM cliente WHERE nroDoc = " + Me.msktxt_nroDoc.Text
-        txt_delete &= "AND tipoDoc = " + Me.cmb_tipoDoc.SelectedValue.ToString
-        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
-                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
-            Exit Sub
+        If frm_login.per = 1 Then
+            txt_delete &= "DELETE  FROM cliente WHERE nroDoc = " + Me.msktxt_nroDoc.Text
+            txt_delete &= "AND tipoDoc = " + Me.cmb_tipoDoc.SelectedValue.ToString
+            If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                      "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+            ejecutarIUD(txt_delete)
+            cargar_grilla_clientes()
+        ElseIf frm_login.per = 2 Then
+            txt_delete &= "update cliente set borrado = 1 WHERE nroDoc = " + Me.msktxt_nroDoc.Text
+            txt_delete &= "AND tipoDoc = " + Me.cmb_tipoDoc.SelectedValue.ToString
+            ejecutarIUD(txt_delete)
+            cargar_grilla_clientes()
         End If
-        ejecutarIUD(txt_delete)
-        cargar_grilla_clientes()
         Me.blanquiar()
         Me.habilitar(False)
         Me.cmd_modificar.Enabled = False
@@ -195,29 +207,6 @@ Public Class frm_Clientes
     End Sub
 
 
-    'ESTE NO SE USA PORQUE CAMBIAMOS A LA GRILLA (DATAGRIDVIEW)
-    'Private Function leoPersona(ByVal nombreTabla As String) As Data.DataTable
-    '    Dim tabla As New Data.DataTable
-    '    Me.conexion.ConnectionString = cadenaConexion
-    '    Me.conexion.Open()
-
-    '    Me.comando.Connection = conexion
-    '    Me.comando.CommandType = CommandType.Text
-    '    Me.comando.CommandText = "Select apellido+', '+nombres as nombres, nroDoc as documento from " & nombreTabla
-
-    '    tabla.Load(comando.ExecuteReader())
-
-    '    Me.conexion.Close()
-    '    Return tabla
-    'End Function
-
-    'NO SE CARGA LISTA
-    'Private Sub cargarLista(ByRef lista As ListBox, ByRef tablas As Data.DataTable)
-    '    lista.DataSource = tablas
-    '    lista.DisplayMember = "nombres"
-    '    lista.ValueMember = "documento"
-    'End Sub
-
 
     Private Sub cargar_grilla_clientes()
         Dim sql As String = ""
@@ -266,7 +255,7 @@ Public Class frm_Clientes
         tabla = leoTabla(sql)
 
         If tabla.Rows.Count = 0 Then
-            MessageBox.Show("No hay datos para recuperar")
+            MessageBox.Show("No hay datos para recuperar", "ImportantE", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Exit Sub
         End If
 
@@ -342,7 +331,7 @@ Public Class frm_Clientes
         txt_insert &= "," & cmb_tipoDoc.SelectedValue()
         txt_insert &= ",'" & txt_nombre.Text.TrimStart.TrimEnd
         txt_insert &= "','" & txt_apellido.Text.TrimStart.TrimEnd
-        txt_insert &= "'," & msktxt_telefono.TextMaskFormat
+        txt_insert &= "','" & msktxt_telefono.Text & "'"
         txt_insert &= ",'" & txt_calle.Text.TrimStart.TrimEnd
         txt_insert &= "'," & msktxt_nro.TextMaskFormat
         txt_insert &= ")"
@@ -376,13 +365,6 @@ Public Class frm_Clientes
         Me.conexion.Close()
     End Sub
 
-
-    ''' <summary>
-    ''' Leo Tabla de Juani ajaja
-    ''' </summary>
-    ''' <param name="codSQL"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
 
 
     Private Function leoTabla(ByVal codSQL As String) As Data.DataTable
@@ -453,5 +435,6 @@ Public Class frm_Clientes
             e.Handled = True
         End If
     End Sub
+
 End Class
 
