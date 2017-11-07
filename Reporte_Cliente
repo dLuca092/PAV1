@@ -1,0 +1,13 @@
+Public Class frm_ReportCliente
+
+    Private Sub frm_ReportCliente_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        Me.ReportViewer1.Clear()
+    End Sub
+
+    Private Sub ReportCliente_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'TODO: esta línea de código carga datos en la tabla 'TALLER2DataSet1.dniClie' Puede moverla o quitarla según sea necesario.
+        Me.dniClieTableAdapter.Fill(Me.TALLER2DataSet1.dniClie)
+
+        Me.ReportViewer1.RefreshReport()
+    End Sub
+End Class
