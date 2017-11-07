@@ -6,6 +6,7 @@ Public Class Conexion
 
 
     Public Sub New()
+        '    cadenaConexion = "Provider=SQLNCLI11;Data Source=LAPTOP-EMIGNQ7D\DAMSQL;Integrated Security=SSPI;Initial Catalog=TALLER2"
         cadenaConexion = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
     End Sub
 
