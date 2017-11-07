@@ -1,0 +1,30 @@
+Public Class frm_ReporPresup
+
+    Private Sub frm_ReporPresup_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        msk_fechaDesde.Text = ""
+        msk_fechaHasta.Text = ""
+        Me.ReportViewer1.Clear()
+    End Sub
+
+    Private Sub frm_ReporPresup_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'TODO: esta línea de código carga datos en la tabla 'TALLER2DataSet5.inforPresup' Puede moverla o quitarla según sea necesario.
+
+    End Sub
+
+    Private Sub btn_Generar_Click(sender As Object, e As EventArgs) Handles btn_Generar.Click
+        If msk_fechaDesde.MaskFull = True And msk_fechaHasta.MaskFull Then
+            If Convert.ToDateTime(msk_fechaDesde.Text) < Convert.ToDateTime(msk_fechaHasta.Text) Then
+                Me.inforPresupTableAdapter.Fill(Me.TALLER2DataSet5.inforPresup, msk_fechaDesde.Text, msk_fechaHasta.Text)
+                Me.ReportViewer1.RefreshReport()
+            Else
+                MessageBox.Show("La fecha desde es mas grande que la fecha hasta!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+        Else
+            MessageBox.Show("Faltan campos por completar!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+            msk_fechaDesde.Text = ""
+            msk_fechaHasta.Text = ""
+            msk_fechaDesde.Focus()
+        End If
+    End Sub
+
+End Class
