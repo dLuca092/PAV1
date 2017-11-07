@@ -4,6 +4,9 @@ Public Class frm_Auto
     Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         If MessageBox.Show("Cerrar gestion de Automoviles?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
         Windows.Forms.DialogResult.OK Then
+            Dim sql As String = ""
+            sql &= "delete from automovil where borrado = 1"
+            Me.CONSULTA.Consulta(sql)
             e.Cancel = False
         Else
             e.Cancel = True
@@ -159,7 +162,7 @@ Public Class frm_Auto
         tabla = CONSULTA.Consulta(sql)
 
         If tabla.Rows.Count = 0 Then
-            MessageBox.Show("No hay datos para recuperar")
+            MessageBox.Show("No hay datos para recuperar", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
             Exit Sub
         End If
         Me.txt_patente.Text = tabla.Rows(0)("patente")
@@ -210,14 +213,14 @@ Public Class frm_Auto
 
         If validarDatos() = True Then
             If validarExistencia("automovil") = False Then
-                MsgBox("Ya se encuentra registrada la patente " + txt_patente.Text, MsgBoxStyle.Exclamation)
+                MessageBox.Show("Ya se encuentra registrada la patente " + txt_patente.Text, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
                 txt_patente.Focus()
             Else
 
 
                 Me.insertar()
                 cargar_grilla_auto()
-                MsgBox("Se ha grabado con éxito", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+                MessageBox.Show("Se ha grabado con éxito", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
                 clearForm()
                 habilitar(False)
@@ -226,7 +229,7 @@ Public Class frm_Auto
                 Me.cmd_consulta.Enabled = True
             End If
         ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Sub
 
@@ -247,13 +250,20 @@ Public Class frm_Auto
 
     Private Sub cmd_borrar_Click(sender As Object, e As EventArgs) Handles cmd_borrar.Click
         Dim txt_delete As String = ""
-        txt_delete &= "DELETE  FROM automovil WHERE patente = '" + Me.txt_patente.Text + "'"
-        If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
-                  "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
-            Exit Sub
+
+        If frm_login.per = 1 Then
+            txt_delete &= "DELETE  FROM automovil WHERE patente = '" + Me.txt_patente.Text + "'"
+            If MsgBox("¿Seguro que  desea continuar con la operación?" + Chr(13) + Chr(13) + _
+                      "Aclaración: Se eliminará de forma permanente.", MsgBoxStyle.Question + MsgBoxStyle.YesNo) = vbNo Then
+                Exit Sub
+            End If
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_auto()
+        ElseIf frm_login.per = 2 Then
+            txt_delete &= "update automovil set borrado = 1 WHERE patente = '" + Me.txt_patente.Text + "'"
+            CONSULTA.Modificacion(txt_delete)
+            cargar_grilla_auto()
         End If
-        CONSULTA.Modificacion(txt_delete)
-        cargar_grilla_auto()
         Me.blanquiar()
         Me.habilitar(False)
         Me.cmd_modificar.Enabled = False
@@ -271,22 +281,27 @@ Public Class frm_Auto
     End Sub
 
 
-
-
     Private Sub cmd_Buscar_Click(sender As Object, e As EventArgs) Handles cmd_Buscar.Click
-        Dim doc As String = ""
-        Dim tabla As New DataTable
-        doc &= "select nroDoc,tipoDoc from cliente where nroDoc = " & msktxt_nroDoc.Text & "And tipoDoc =" & cmb_tipoDoc.SelectedValue()
-        tabla = Me.CONSULTA.Consulta(doc)
-        habilitar(False)
-        Me.msktxt_nroDoc.Enabled = True
-        Me.cmb_tipoDoc.Enabled = True
-        If tabla.Rows.Count = 1 Then
-            habilitar(True)
-            txt_patente.Focus()
+        If msktxt_nroDoc.Text <> "" And cmb_tipoDoc.Text <> "" Then
+            Dim doc As String = ""
+            Dim tabla As New DataTable
+            doc &= "select nroDoc,tipoDoc from cliente where nroDoc = " & msktxt_nroDoc.Text & "And tipoDoc =" & cmb_tipoDoc.SelectedValue()
+            tabla = Me.CONSULTA.Consulta(doc)
+            habilitar(False)
+            Me.msktxt_nroDoc.Enabled = True
+            Me.cmb_tipoDoc.Enabled = True
+            If tabla.Rows.Count = 1 Then
+                habilitar(True)
+                txt_patente.Focus()
+                Me.msktxt_nroDoc.Enabled = False
+                Me.cmb_tipoDoc.Enabled = False
+            Else
+                MessageBox.Show("El Cliente con el documento ingresado no existe. Ingrese de nuevo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                msktxt_nroDoc.Focus()
+            End If
         Else
-            MsgBox("El Cliente con el Documento: '" & msktxt_nroDoc.Text & "' y '" & cmb_tipoDoc.SelectedValue & "' , No Existe.Ingrese de nuevo.")
-            msktxt_nroDoc.Focus()
+            MessageBox.Show("Debe cargar un Cleinte!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
+
     End Sub
 End Class
