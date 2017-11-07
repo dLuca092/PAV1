@@ -1,4 +1,5 @@
 Public Class frm_consulCli
+    'Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LAPTOP-EMIGNQ7D\DAMSQL;Integrated Security=SSPI;Initial Catalog=TALLER2"
     Dim cadenaConexion As String = "Provider=SQLNCLI11;Data Source=LUCA\SQLEXPRESS;Integrated Security=SSPI;Initial Catalog=TALLER2"
     Dim conexion As New Data.OleDb.OleDbConnection
     Dim comando As New Data.OleDb.OleDbCommand
@@ -28,7 +29,7 @@ Public Class frm_consulCli
         tabla = leoTabla(sql)
 
         If tabla.Rows.Count = 0 Then
-            MsgBox("No se han encontrado Nadie con ese Documento")
+            MessageBox.Show("No se han encontrado Nadie con ese Documento", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Me.msktxt_nroDoc.Focus()
         Else
             Dim C As Integer ' --Colocamos un contador llamado C'
@@ -45,21 +46,8 @@ Public Class frm_consulCli
 
 
     Private Sub borrar_grilla_clientes()
-        Dim sql As String = ""
-        sql &= "SELECT * FROM cliente WHERE nroDoc = " + Me.msktxt_nroDoc.Text + " AND tipoDoc = " + (cmb_tipoDoc.SelectedValue).ToString
+        grid_clientes.Rows.Clear()
 
-        Dim tabla As New DataTable
-        tabla = leoTabla(sql)
-
-        Dim C As Integer ' --Colocamos un contador llamado C'
-        Me.grid_clientes.Rows.Clear()
-        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
-            Me.grid_clientes.Rows.Add()            '--Para añadir datos en el grid'
-            Me.grid_clientes.Rows(C).Cells(0).Value = ""
-            Me.grid_clientes.Rows(C).Cells(1).Value = ""
-            Me.grid_clientes.Rows(C).Cells(2).Value = ""
-            Me.grid_clientes.Rows(C).Cells(3).Value = ""
-        Next
     End Sub
 
     Private Sub clearForm()
@@ -116,7 +104,7 @@ Public Class frm_consulCli
         If validarDatos() = True Then
             cargar_grilla_clientes()
         ElseIf validarDatos() = False Then
-            MsgBox("Falta completar datos.", MsgBoxStyle.Exclamation)
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Sub
 
