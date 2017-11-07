@@ -1,0 +1,115 @@
+Public Class frm_consultaRepuesto
+    Dim CONSULTA As New Conexion
+
+    Private Sub frm_Inicio_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        If MessageBox.Show("Cerrar consulta de Repuestos?", "Importante", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) = _
+        Windows.Forms.DialogResult.OK Then
+            e.Cancel = False
+        Else
+            e.Cancel = True
+        End If
+        Me.borrar_grilla_repuesto()
+        Me.clearForm()
+    End Sub
+
+    Private Sub consultaRepuesto_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.txt_nombre.Focus()
+    End Sub
+
+    Private Sub cargar_grilla_repuesto()
+        Dim sql As String = ""
+        sql &= "SELECT idRepuesto , nombre, precioUnitario FROM repuesto WHERE nombre = '" + Me.txt_nombre.Text + "'"
+        txt_nombre.Focus()
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        If tabla.Rows.Count = 0 Then
+            MessageBox.Show("No se ha encontrado nada con ese Nombre", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Me.txt_nombre.Focus()
+
+        Else
+            Dim C As Integer ' --Colocamos un contador llamado C'
+            Me.grid_repuesto.Rows.Clear()
+            For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+                Me.grid_repuesto.Rows.Add()            '--Para añadir datos en el grid'
+                Me.grid_repuesto.Rows(C).Cells(0).Value = tabla.Rows(C)("idRepuesto")
+                Me.grid_repuesto.Rows(C).Cells(1).Value = tabla.Rows(C)("nombre")
+                Me.grid_repuesto.Rows(C).Cells(2).Value = tabla.Rows(C)("precioUnitario")
+
+
+            Next
+        End If
+
+
+    End Sub
+
+
+    Private Sub borrar_grilla_repuesto()
+        Dim sql As String = ""
+        sql &= "SELECT idRepuesto , nombre ,precioUnitario FROM repuesto WHERE nombre = '" + Me.txt_nombre.Text + "'"
+
+        Dim tabla As New DataTable
+        tabla = Me.CONSULTA.Consulta(sql)
+
+        Dim C As Integer ' --Colocamos un contador llamado C'
+        Me.grid_repuesto.Rows.Clear()
+        For C = 0 To tabla.Rows.Count - 1 '--Cuenta las filas'
+            Me.grid_repuesto.Rows.Add()            '--Para añadir datos en el grid'
+            Me.grid_repuesto.Rows(C).Cells(0).Value = ""
+            Me.grid_repuesto.Rows(C).Cells(1).Value = ""
+            Me.grid_repuesto.Rows(C).Cells(2).Value = ""
+        Next
+    End Sub
+
+    Private Sub clearForm()
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                obj.Text = ""
+            End If
+        Next
+    End Sub
+
+    Private Sub cargarCombo(ByRef combo As ComboBox, ByRef tabla As Data.DataTable, ByVal pk As String, ByVal description As String)
+        combo.DataSource = tabla
+        combo.DisplayMember = description
+        combo.ValueMember = pk
+    End Sub
+
+    Private Function validarDatos() As Boolean
+        For Each obj As Windows.Forms.Control In Me.Controls
+            If obj.GetType().Name = "TextBox" Or obj.GetType().Name = "MaskedTextBox" Then
+                If obj.Text = "" Then
+                    obj.Focus()
+                    Return False
+                End If
+            End If
+            If obj.GetType().Name = "ComboBox" Then
+                Dim O As ComboBox = obj
+                If O.SelectedIndex = -1 Then
+                    O.Focus()
+                    Return False
+                End If
+            End If
+        Next
+        Return True
+    End Function
+
+
+    Private Sub btn_bucar_Click(sender As Object, e As EventArgs) Handles btn_bucar.Click
+        Me.txt_nombre.Focus()
+        borrar_grilla_repuesto()
+
+        If validarDatos() = True Then
+            txt_nombre.Text.TrimStart()
+            txt_nombre.Text.TrimEnd()
+
+            cargar_grilla_repuesto()
+
+        ElseIf validarDatos() = False Then
+            MessageBox.Show("Falta completar datos.", "AViso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+
+    End Sub
+
+
+End Class
