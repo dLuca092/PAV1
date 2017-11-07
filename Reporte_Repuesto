@@ -1,0 +1,20 @@
+Public Class frm_ReporRepues
+
+    Private Sub frm_ReporRepues_FormClosing(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
+        Me.ReportViewer1.Clear()
+    End Sub
+
+    Private Sub ReporRepues_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'TODO: esta línea de código carga datos en la tabla 'TALLER2DataSet2.stock' Puede moverla o quitarla según sea necesario.
+
+    End Sub
+
+    Private Sub btn_Generar_Click(sender As Object, e As EventArgs) Handles btn_Generar.Click
+        If txt_cantidad.Text <> "" Then
+            Me.stockTableAdapter.Fill(Me.TALLER2DataSet2.stock, txt_cantidad.Text)
+            Me.ReportViewer1.RefreshReport()
+        Else
+            MessageBox.Show("FAlta completar cantidad!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        End If
+    End Sub
+End Class
