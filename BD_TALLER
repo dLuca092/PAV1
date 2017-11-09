@@ -1,0 +1,512 @@
+USE [master]
+GO
+/****** Object:  Database [TALLER2]    Script Date: 08/11/2017 21:17:02 ******/
+CREATE DATABASE [TALLER2]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'TALLER2', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL12.SQLEXPRESS\MSSQL\DATA\TALLER2.mdf' , SIZE = 4288KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+ LOG ON 
+( NAME = N'TALLER2_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL12.SQLEXPRESS\MSSQL\DATA\TALLER2_log.ldf' , SIZE = 1072KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+GO
+ALTER DATABASE [TALLER2] SET COMPATIBILITY_LEVEL = 120
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [TALLER2].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [TALLER2] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [TALLER2] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [TALLER2] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [TALLER2] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [TALLER2] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [TALLER2] SET AUTO_CLOSE ON 
+GO
+ALTER DATABASE [TALLER2] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [TALLER2] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [TALLER2] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [TALLER2] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [TALLER2] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [TALLER2] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [TALLER2] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [TALLER2] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [TALLER2] SET  ENABLE_BROKER 
+GO
+ALTER DATABASE [TALLER2] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [TALLER2] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [TALLER2] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [TALLER2] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [TALLER2] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [TALLER2] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [TALLER2] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [TALLER2] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [TALLER2] SET  MULTI_USER 
+GO
+ALTER DATABASE [TALLER2] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [TALLER2] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [TALLER2] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [TALLER2] SET TARGET_RECOVERY_TIME = 0 SECONDS 
+GO
+ALTER DATABASE [TALLER2] SET DELAYED_DURABILITY = DISABLED 
+GO
+USE [TALLER2]
+GO
+/****** Object:  Table [dbo].[automovil]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[automovil](
+	[patente] [varchar](30) NOT NULL,
+	[marca] [varchar](30) NULL,
+	[color] [varchar](30) NULL,
+	[Clientes_NroDoc] [int] NOT NULL,
+	[Clientes_tipoDoc] [int] NOT NULL,
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [PK_automovil] PRIMARY KEY CLUSTERED 
+(
+	[patente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[cliente]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[cliente](
+	[nroDoc] [int] NOT NULL,
+	[tipoDoc] [int] NOT NULL,
+	[nombres] [varchar](30) NULL,
+	[apellido] [varchar](30) NULL,
+	[telefono] [varchar](30) NULL,
+	[calle] [varchar](30) NULL,
+	[nro] [int] NULL,
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [PK_cliente] PRIMARY KEY CLUSTERED 
+(
+	[nroDoc] ASC,
+	[tipoDoc] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[detalle]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[detalle](
+	[idFactura] [int] NOT NULL,
+	[tipoFactura] [int] NOT NULL,
+	[idItem] [int] NOT NULL,
+	[precio] [int] NULL,
+	[cantidad] [int] NULL,
+	[borrado] [int] NULL DEFAULT ((0)),
+ CONSTRAINT [pk_detalleFac] PRIMARY KEY CLUSTERED 
+(
+	[idFactura] ASC,
+	[tipoFactura] ASC,
+	[idItem] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[detallexRepuesto]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[detallexRepuesto](
+	[idFactura] [int] NOT NULL,
+	[tipoFactura] [int] NOT NULL,
+	[idItem] [int] NOT NULL,
+	[idRepuesto] [int] NOT NULL,
+ CONSTRAINT [pk_detxRep0] PRIMARY KEY CLUSTERED 
+(
+	[idFactura] ASC,
+	[tipoFactura] ASC,
+	[idItem] ASC,
+	[idRepuesto] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[detallexServicio]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[detallexServicio](
+	[idFactura] [int] NOT NULL,
+	[tipoFactura] [int] NOT NULL,
+	[idItem] [int] NOT NULL,
+	[idserReparacion] [int] NOT NULL,
+ CONSTRAINT [pk_detxSer0] PRIMARY KEY CLUSTERED 
+(
+	[idFactura] ASC,
+	[tipoFactura] ASC,
+	[idItem] ASC,
+	[idserReparacion] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[factura]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[factura](
+	[idFactura] [int] IDENTITY(15326,1) NOT NULL,
+	[tipoFac] [int] NOT NULL,
+	[fecha] [datetime] NULL,
+	[nroDoc] [int] NOT NULL,
+	[tipoDoc] [int] NOT NULL,
+	[montoTotal] [int] NULL,
+	[borrado] [int] NULL DEFAULT ((0)),
+ CONSTRAINT [PK_factura] PRIMARY KEY CLUSTERED 
+(
+	[idFactura] ASC,
+	[tipoFac] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[permisos]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[permisos](
+	[id_permisos] [varchar](20) NOT NULL,
+	[nombre] [varchar](30) NULL,
+ CONSTRAINT [pk_permisos] PRIMARY KEY CLUSTERED 
+(
+	[id_permisos] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[presupuesto]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[presupuesto](
+	[idPresupuestos] [int] IDENTITY(862,1) NOT NULL,
+	[descri] [varchar](1500) NOT NULL,
+	[nroDoc] [int] NOT NULL,
+	[tipoDoc] [int] NOT NULL,
+	[patente] [varchar](30) NOT NULL,
+	[fecha] [datetime] NULL,
+	[importe] [int] NULL,
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [PK_presupuesto] PRIMARY KEY CLUSTERED 
+(
+	[idPresupuestos] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[Proveedores]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[Proveedores](
+	[id_proveedores] [int] NOT NULL,
+	[nombres] [varchar](50) NULL,
+	[calle] [varchar](50) NULL,
+	[numero] [int] NULL,
+	[localidad] [varchar](50) NULL,
+	[telefono] [varchar](50) NULL,
+	[mail] [varchar](50) NULL,
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [pk_proveedores] PRIMARY KEY CLUSTERED 
+(
+	[id_proveedores] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[repuesto]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[repuesto](
+	[idRepuesto] [int] NOT NULL,
+	[nombre] [varchar](30) NULL,
+	[descripcion] [varchar](30) NULL,
+	[precioUnitario] [int] NULL,
+	[cantidad] [int] NULL DEFAULT ((0)),
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [PK_repuesto] PRIMARY KEY CLUSTERED 
+(
+	[idRepuesto] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[servicioReparacion]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[servicioReparacion](
+	[idSerReparacion] [int] NOT NULL,
+	[nombre] [varchar](30) NULL,
+	[descripcion] [varchar](30) NULL,
+	[precioUnitario] [int] NULL,
+	[cantidad] [int] NULL DEFAULT ((0)),
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [PK_servicio] PRIMARY KEY CLUSTERED 
+(
+	[idSerReparacion] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[tipoDoc]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[tipoDoc](
+	[idTipoDoc] [int] NOT NULL,
+	[nombre] [varchar](30) NOT NULL,
+ CONSTRAINT [fk_tipoDoc] PRIMARY KEY CLUSTERED 
+(
+	[idTipoDoc] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[tipoFac]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[tipoFac](
+	[idTipoFac] [int] NOT NULL,
+	[nombre] [varchar](30) NOT NULL,
+ CONSTRAINT [pk_tipoFac] PRIMARY KEY CLUSTERED 
+(
+	[idTipoFac] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[usuario]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[usuario](
+	[id_usuario] [varchar](30) NOT NULL,
+	[nombre] [varchar](30) NOT NULL,
+	[pass] [varchar](20) NOT NULL,
+	[permisos] [varchar](20) NULL,
+	[borrado] [int] NOT NULL DEFAULT ((0)),
+ CONSTRAINT [pk_Usuario] PRIMARY KEY CLUSTERED 
+(
+	[id_usuario] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_PADDING OFF
+GO
+ALTER TABLE [dbo].[automovil]  WITH CHECK ADD  CONSTRAINT [FK_automovil] FOREIGN KEY([Clientes_NroDoc], [Clientes_tipoDoc])
+REFERENCES [dbo].[cliente] ([nroDoc], [tipoDoc])
+GO
+ALTER TABLE [dbo].[automovil] CHECK CONSTRAINT [FK_automovil]
+GO
+ALTER TABLE [dbo].[cliente]  WITH CHECK ADD  CONSTRAINT [FK_cliente] FOREIGN KEY([tipoDoc])
+REFERENCES [dbo].[tipoDoc] ([idTipoDoc])
+GO
+ALTER TABLE [dbo].[cliente] CHECK CONSTRAINT [FK_cliente]
+GO
+ALTER TABLE [dbo].[detalle]  WITH CHECK ADD  CONSTRAINT [fk_detalleFac] FOREIGN KEY([tipoFactura])
+REFERENCES [dbo].[tipoFac] ([idTipoFac])
+GO
+ALTER TABLE [dbo].[detalle] CHECK CONSTRAINT [fk_detalleFac]
+GO
+ALTER TABLE [dbo].[detalle]  WITH CHECK ADD  CONSTRAINT [fk_detalleFactu] FOREIGN KEY([idFactura], [tipoFactura])
+REFERENCES [dbo].[factura] ([idFactura], [tipoFac])
+GO
+ALTER TABLE [dbo].[detalle] CHECK CONSTRAINT [fk_detalleFactu]
+GO
+ALTER TABLE [dbo].[detallexRepuesto]  WITH CHECK ADD  CONSTRAINT [fk_detxRep1] FOREIGN KEY([idFactura], [tipoFactura], [idItem])
+REFERENCES [dbo].[detalle] ([idFactura], [tipoFactura], [idItem])
+GO
+ALTER TABLE [dbo].[detallexRepuesto] CHECK CONSTRAINT [fk_detxRep1]
+GO
+ALTER TABLE [dbo].[detallexRepuesto]  WITH CHECK ADD  CONSTRAINT [fk_detxRep2] FOREIGN KEY([idRepuesto])
+REFERENCES [dbo].[repuesto] ([idRepuesto])
+GO
+ALTER TABLE [dbo].[detallexRepuesto] CHECK CONSTRAINT [fk_detxRep2]
+GO
+ALTER TABLE [dbo].[detallexServicio]  WITH CHECK ADD  CONSTRAINT [fk_detxSer1] FOREIGN KEY([idFactura], [tipoFactura], [idItem])
+REFERENCES [dbo].[detalle] ([idFactura], [tipoFactura], [idItem])
+GO
+ALTER TABLE [dbo].[detallexServicio] CHECK CONSTRAINT [fk_detxSer1]
+GO
+ALTER TABLE [dbo].[detallexServicio]  WITH CHECK ADD  CONSTRAINT [fk_detxSer2] FOREIGN KEY([idserReparacion])
+REFERENCES [dbo].[servicioReparacion] ([idSerReparacion])
+GO
+ALTER TABLE [dbo].[detallexServicio] CHECK CONSTRAINT [fk_detxSer2]
+GO
+ALTER TABLE [dbo].[factura]  WITH CHECK ADD  CONSTRAINT [FK_factura] FOREIGN KEY([nroDoc], [tipoDoc])
+REFERENCES [dbo].[cliente] ([nroDoc], [tipoDoc])
+GO
+ALTER TABLE [dbo].[factura] CHECK CONSTRAINT [FK_factura]
+GO
+ALTER TABLE [dbo].[factura]  WITH CHECK ADD  CONSTRAINT [FK_facturas] FOREIGN KEY([tipoFac])
+REFERENCES [dbo].[tipoFac] ([idTipoFac])
+GO
+ALTER TABLE [dbo].[factura] CHECK CONSTRAINT [FK_facturas]
+GO
+ALTER TABLE [dbo].[presupuesto]  WITH CHECK ADD  CONSTRAINT [FK_presupuesto] FOREIGN KEY([nroDoc], [tipoDoc])
+REFERENCES [dbo].[cliente] ([nroDoc], [tipoDoc])
+GO
+ALTER TABLE [dbo].[presupuesto] CHECK CONSTRAINT [FK_presupuesto]
+GO
+ALTER TABLE [dbo].[presupuesto]  WITH CHECK ADD  CONSTRAINT [FL_presupuesto] FOREIGN KEY([patente])
+REFERENCES [dbo].[automovil] ([patente])
+GO
+ALTER TABLE [dbo].[presupuesto] CHECK CONSTRAINT [FL_presupuesto]
+GO
+ALTER TABLE [dbo].[usuario]  WITH CHECK ADD  CONSTRAINT [fk_Permisos] FOREIGN KEY([permisos])
+REFERENCES [dbo].[permisos] ([id_permisos])
+GO
+ALTER TABLE [dbo].[usuario] CHECK CONSTRAINT [fk_Permisos]
+GO
+/****** Object:  StoredProcedure [dbo].[dniClie]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[dniClie]
+as
+begin
+select c.*, td.*
+from cliente c join tipoDoc td on (c.tipoDoc = td.idTipoDoc)
+end
+
+GO
+/****** Object:  StoredProcedure [dbo].[inforFactura]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[inforFactura]
+@fecha1 date,
+@fecha2 date
+as
+begin
+select *
+from factura f inner join detalle d on ((f.idFactura = d.idFactura) and (f.tipoFac = d.tipoFactura)) inner join tipoFac t on (f.tipoFac = t.idTipoFac) --inner join repuesto r on (d.idItem = r.idRepuesto) inner join servicioReparacion s on (d.idItem = s.idSerReparacion)
+where fecha>= @fecha1 and fecha <= @fecha2  --and (d.idItem In ( Select idRepuesto from repuesto) or d.idItem In ( Select idSerReparacion from servicioReparacion))
+end  
+ 
+GO
+/****** Object:  StoredProcedure [dbo].[inforPresup]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--procedimiento almacenado(para informes)
+create proc [dbo].[inforPresup] 
+@fecha1 date,
+@fecha2 date
+as
+begin
+select *
+from presupuesto
+where fecha>= @fecha1 and fecha <= @fecha2 
+end 
+GO
+/****** Object:  StoredProcedure [dbo].[stock]    Script Date: 08/11/2017 21:17:03 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[stock]
+@param int
+as
+begin 
+select *
+from repuesto 
+where cantidad <= @param
+end 
+
+GO
+USE [master]
+GO
+ALTER DATABASE [TALLER2] SET  READ_WRITE 
+GO
